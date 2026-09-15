@@ -238,7 +238,10 @@ export async function getEleveDetail(studentId: string): Promise<EleveDetail | n
   const totalCoef = noteesUniquement.reduce((s, n) => s + n.coefficient, 0)
   const moyenne =
     totalCoef > 0
-      ? noteesUniquement.reduce((s, n) => s + n.note! * n.coefficient, 0) / totalCoef
+      ? noteesUniquement.reduce((s, n) => {
+          const bareme = n.bareme || 20
+          return s + ((n.note! / bareme) * 20 * n.coefficient)
+        }, 0) / totalCoef
       : 0
 
   return {

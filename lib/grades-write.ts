@@ -239,12 +239,21 @@ export async function sauvegarderNotes(
     }
   }
 
-  const { error: errStatut } = await supabase
-    .from('assessments')
-    .update({ status: valider ? 'validee' : 'saisie' })
-    .eq('id', evaluationId)
-  if (errStatut) {
-    return { ok: false, message: messageErreur(errStatut, 'Mise à jour du statut') }
+  if (valider) {
+    const { error: errValidation } = await supabase.rpc('valider_feuille_notes', {
+      p_assessment_id: evaluationId,
+    })
+    if (errValidation) {
+      return { ok: false, message: messageErreur(errValidation, 'Validation des notes') }
+    }
+  } else {
+    const { error: errStatut } = await supabase
+      .from('assessments')
+      .update({ status: 'saisie' })
+      .eq('id', evaluationId)
+    if (errStatut) {
+      return { ok: false, message: messageErreur(errStatut, 'Mise à jour du statut') }
+    }
   }
 
   return {

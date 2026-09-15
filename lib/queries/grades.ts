@@ -370,7 +370,7 @@ export async function getBulletins(
         .eq('academic_year_id', ctx.academicYearId)
         .eq('class_id', classId)
         .eq('term_id', termId ?? '')
-        .neq('status', 'annulee'),
+        .in('status', ['validee']),
       supabase
         .from('grades')
         .select('assessment_id, student_id, score, assessments:assessment_id ( coefficient, max_score )')

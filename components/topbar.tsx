@@ -32,6 +32,12 @@ export function Topbar() {
   const [email, setEmail] = useState<string>("Utilisateur")
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
+  const [selectedYear, setSelectedYear] = useState<string | undefined>(() => {
+    if (typeof document === "undefined") return currentAcademicYear?.id
+    const match = document.cookie.match(/gs_annee=([^;]+)/)
+    return match ? match[1] : currentAcademicYear?.id
+  })
+
   useEffect(() => {
     let mounted = true
 
@@ -104,7 +110,13 @@ export function Topbar() {
         </div>
 
         <Select
-          defaultValue={currentAcademicYear?.id}
+          value={selectedYear}
+          onValueChange={(v) => {
+            if (!v) return
+            setSelectedYear(v)
+            document.cookie = `gs_annee=${v}; path=/; max-age=31536000; samesite=lax`
+            router.refresh()
+          }}
           items={Object.fromEntries(
             academicYears.map((y) => [String(y.id), y.label])
           )}

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentSchoolContext } from '@/lib/queries/school-context'
+import { getMoyennesParEleve } from '@/lib/queries/grades-helper'
 
 export type Classe = {
   id: string
@@ -180,30 +181,10 @@ export async function getClassDetail(classId: string): Promise<ClassDetail | nul
     .map((r) => (Array.isArray(r.students) ? r.students[0]?.id : r.students?.id))
     .filter((id): id is string => Boolean(id))
 
-  // Moyenne pondérée par élève (grades.score pondéré par assessments.coefficient)
-  const moyennesParEleve = new Map<string, number>()
-  if (studentIds.length > 0) {
-    const { data: gradeRows } = await supabase
-      .from('grades')
-      .select('student_id, score, assessments:assessment_id ( coefficient )')
-      .in('student_id', studentIds)
-      .eq('school_id', ctx.schoolId)
-      .not('score', 'is', null)
-
-    const totals = new Map<string, { points: number; coef: number }>()
-    for (const g of gradeRows ?? []) {
-      const assessment = Array.isArray(g.assessments) ? g.assessments[0] : g.assessments
-      const coef = assessment?.coefficient ?? 1
-      const score = Number(g.score)
-      const t = totals.get(g.student_id) ?? { points: 0, coef: 0 }
-      t.points += score * coef
-      t.coef += coef
-      totals.set(g.student_id, t)
-    }
-    for (const [studentId, t] of totals) {
-      moyennesParEleve.set(studentId, t.coef > 0 ? t.points / t.coef : 0)
-    }
-  }
+  // Moyenne pondérée /20 par élève
+  const moyennesParEleve = studentIds.length > 0
+    ? await getMoyennesParEleve(supabase, ctx.schoolId, studentIds)
+    : new Map<string, number>()
 
   const eleves: ClasseEleve[] = (enrollmentRows ?? []).map((r) => {
     const s = Array.isArray(r.students) ? r.students[0] : r.students

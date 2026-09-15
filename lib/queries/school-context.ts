@@ -1,3 +1,4 @@
+import { cookies } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 
 export type SchoolContext = {
@@ -41,25 +42,28 @@ export async function getCurrentSchoolContext(): Promise<SchoolContext | null> {
 
   if (!membership) return null
 
-  const { data: currentYear } = await supabase
+  const { data: schoolYears } = await supabase
     .from('academic_years')
     .select('id')
     .eq('school_id', membership.school_id)
-    .eq('is_current', true)
-    .maybeSingle()
+    .order('starts_on', { ascending: false })
 
-  // Si aucune année n'est marquée "courante", on retombe sur la plus récente.
-  const academicYearId =
-    currentYear?.id ??
-    (
-      await supabase
-        .from('academic_years')
-        .select('id')
-        .eq('school_id', membership.school_id)
-        .order('starts_on', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-    ).data?.id
+  const yearIds = (schoolYears ?? []).map((y) => y.id)
+  const cookieStore = await cookies()
+  const cookieYear = cookieStore.get('gs_annee')?.value ?? null
+
+  let academicYearId: string | null = null
+  if (cookieYear && yearIds.includes(cookieYear)) {
+    academicYearId = cookieYear
+  } else {
+    const { data: currentYear } = await supabase
+      .from('academic_years')
+      .select('id')
+      .eq('school_id', membership.school_id)
+      .eq('is_current', true)
+      .maybeSingle()
+    academicYearId = currentYear?.id ?? yearIds[0] ?? null
+  }
 
   if (!academicYearId) return null
 
