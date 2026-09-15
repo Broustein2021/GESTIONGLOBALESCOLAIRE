@@ -210,8 +210,8 @@ export default async function DashboardPage() {
               <TableRow>
                 <TableHead>Reçu</TableHead>
                 <TableHead>Élève</TableHead>
-                <TableHead>Motif</TableHead>
-                <TableHead>Mode</TableHead>
+                <TableHead className="hidden sm:table-cell">Motif</TableHead>
+                <TableHead className="hidden md:table-cell">Mode</TableHead>
                 <TableHead className="text-right">Montant</TableHead>
                 <TableHead>Statut</TableHead>
               </TableRow>
@@ -228,8 +228,8 @@ export default async function DashboardPage() {
                   <TableRow key={p.id}>
                     <TableCell className="font-mono text-xs">{p.recu ?? '—'}</TableCell>
                     <TableCell className="font-medium">{p.eleve ?? '—'}</TableCell>
-                    <TableCell className="text-muted-foreground">{p.motif ?? '—'}</TableCell>
-                    <TableCell>{p.mode}</TableCell>
+                    <TableCell className="text-muted-foreground hidden sm:table-cell">{p.motif ?? '—'}</TableCell>
+                    <TableCell className="hidden md:table-cell">{p.mode}</TableCell>
                     <TableCell className="text-right font-medium tabular-nums">
                       {formatFCFA(p.montant)}
                     </TableCell>
